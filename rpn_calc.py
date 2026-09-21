@@ -22,26 +22,25 @@ class Stack(Generic[T]):
     """A LIFO stack. Callers may only use push/pop/peek/is_empty."""
 
     def __init__(self) -> None:
-        # TODO: internal storage (a Python list is fine as the backing store).
-        raise NotImplementedError
+        self._items: List[T] = []
 
     def push(self, item: T) -> None:
-        # TODO
-        raise NotImplementedError
+        self._items.append(item)
 
     def pop(self) -> T:
         """Remove and return the top item. Raise IndexError if empty."""
-        # TODO
-        raise NotImplementedError
+        if self.is_empty():
+            raise IndexError("pop from empty stack")
+        return self._items.pop()
 
     def peek(self) -> T:
         """Return (without removing) the top item. Raise IndexError if empty."""
-        # TODO
-        raise NotImplementedError
+        if self.is_empty():
+            raise IndexError("peek at empty stack")
+        return self._items[-1]
 
     def is_empty(self) -> bool:
-        # TODO
-        raise NotImplementedError
+        return len(self._items) == 0
 
 
 def evaluate_postfix(expression: str) -> float:
@@ -50,8 +49,45 @@ def evaluate_postfix(expression: str) -> float:
     Supports + - * /. Raise ValueError (with a descriptive message) on
     malformed input -- too many operators, division by zero, etc.
     """
-    # TODO
-    raise NotImplementedError
+    stack: Stack[float] = Stack()
+    tokens = expression.split()
+
+    for token in tokens:
+        if token in ("+", "-", "*", "/"):
+            if stack.is_empty():
+                raise ValueError(f"Malformed expression: missing operands for '{token}'")
+            b = stack.pop()
+            if stack.is_empty():
+                raise ValueError(f"Malformed expression: missing operands for '{token}'")
+            a = stack.pop()
+
+            if token == "+":
+                stack.push(a + b)
+            elif token == "-":
+                stack.push(a - b)
+            elif token == "*":
+                stack.push(a * b)
+            elif token == "/":
+                if b == 0:
+                    raise ValueError("Division by zero")
+                stack.push(a / b)
+        else:
+            try:
+                val = float(token)
+                stack.push(val)
+            except ValueError:
+                raise ValueError(f"Invalid token: {token}")
+
+    if stack.is_empty():
+        raise ValueError("Empty expression")
+
+    result = stack.pop()
+
+    # If items remain in stack, there were too many operands (not enough operators)
+    if not stack.is_empty():
+        raise ValueError("Malformed expression: too many operands")
+
+    return result
 
 
 def is_balanced(expression: str) -> bool:
@@ -61,8 +97,20 @@ def is_balanced(expression: str) -> bool:
     mismatched-type closes, unmatched opens, and unmatched closes by
     returning False -- never raise.
     """
-    # TODO
-    raise NotImplementedError
+    stack: Stack[str] = Stack()
+    bracket_map = {")": "(", "]": "[", "}": "{"}
+
+    for char in expression:
+        if char in "([{":
+            stack.push(char)
+        elif char in ")]}":
+            if stack.is_empty():
+                return False
+            top = stack.pop()
+            if top != bracket_map[char]:
+                return False
+
+    return stack.is_empty()
 
 
 # ============================== VERIFICATION SUITE ==============================
